@@ -493,16 +493,41 @@ window.doLogin = async function(){
   const p = document.getElementById('li-pass').value;
   const btn = document.getElementById('btn-login');
   btn.disabled=true; btn.textContent='Signing in...';
+  
   try {
     const snap = await getDoc(doc(db,'users',u));
-    if(!snap.exists()){ showAuthErr('No account "@'+u+'".'); btn.disabled=false; btn.textContent='Enter Board'; return; }
-    if(snap.data().password !== hashPass(p)){ showAuthErr('Wrong password.'); btn.disabled=false; btn.textContent='Enter Board'; return; }
+    
+    // 1. Kiểm tra tài khoản tồn tại
+    if(!snap.exists()){ 
+      showAuthErr('No account "@'+u+'".'); 
+      btn.disabled=false; btn.textContent='Enter Board'; return; 
+    }
+    
+    const userData = snap.data();
+
+    // 2. Kiểm tra mật khẩu
+    if(userData.password !== hashPass(p)){ 
+      showAuthErr('Wrong password.'); 
+      btn.disabled=false; btn.textContent='Enter Board'; return; 
+    }
+
+    // 3. KIỂM TRA BAN (Phải check TRƯỚC khi cho vào App)
+    if(userData.banned === true){ 
+      showAuthErr('This account has been banned.'); 
+      btn.disabled=false; btn.textContent='Enter Board'; 
+      return; 
+    }
+
+    // 4. Nếu mọi thứ OK mới gán User và lưu Session
     currentUser = u;
-    if(snap.data().banned){ showAuthErr('This account has been banned.'); btn.disabled=false; btn.textContent='Enter Board'; return; }
     localStorage.setItem('yl_session', u);
     hideAuthScreen();
     enterBoard();
-  } catch(e){ showAuthErr('Error: '+e.message); btn.disabled=false; btn.textContent='Enter Board'; }
+
+  } catch(e){ 
+    showAuthErr('Error: '+e.message); 
+    btn.disabled=false; btn.textContent='Enter Board'; 
+  }
 };
 
 function hideAuthScreen(){
