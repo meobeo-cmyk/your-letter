@@ -536,22 +536,28 @@ function hideAuthScreen(){
   setTimeout(()=>s.style.display='none', 500);
 }
 
-window.doLogout = function(){
-  localStorage.removeItem('yl_session');
-  currentUser = null;
-  if(unsubLetters) unsubLetters();
-  cancelAnimationFrame(animId);
-  document.getElementById('canvas').innerHTML='';
-  letters={}; lettersOnBoard={};
-  updateCount();
-  document.getElementById('empty-hint').classList.remove('gone');
-  document.getElementById('li-user').value='';
-  document.getElementById('li-pass').value='';
-  hideAuthErr();
-  window.switchTab('login');
-  showAuth();
-};
-
+window.doSignup = async function(){
+  // ... (lấy u, p giống login)
+  try {
+    const docRef = doc(db, 'users', u);
+    const snap = await getDoc(docRef);
+    
+    if(snap.exists()){
+      // NẾU ACC ĐÃ CÓ RỒI (DÙ BỊ BAN HAY KHÔNG) THÌ KHÔNG CHO TẠO ĐÈ
+      showAuthErr('Username "@' + u + '" already taken.');
+      return;
+    }
+    
+    // Nếu chưa có mới cho tạo acc mới với banned mặc định là false
+    await setDoc(docRef, {
+      password: hashPass(p),
+      banned: false,
+      createdAt: new Date()
+    });
+    // ... logic tiếp theo
+  } catch(e) { ... }
+}
+  
 // ── ENTER BOARD ──
 function enterBoard(){
   document.getElementById('tb-username').textContent = '@'+currentUser;
